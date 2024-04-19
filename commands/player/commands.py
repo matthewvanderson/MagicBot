@@ -17,9 +17,10 @@ from utility.components import player_components
 from utility.search import search_results
 from discord.converters import Convert as convert
 from discord.autocomplete import Autocomplete as autocomplete
-#from CommandsOlder.Utils.Player import create_profile_troops
+# from CommandsOlder.Utils.Player import create_profile_troops
 
 import sentry_sdk
+
 
 class PlayerCommands(commands.Cog, name="Player Commands"):
     def __init__(self, bot: CustomClient):
@@ -38,19 +39,21 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
             season_date = self.bot.gen_season_date()
         return season_date
 
-
-
-    @commands.slash_command(name="player")
+    @commands.slash_command(name=disnake.Localized("player", key="player-name"))
     async def player(self, ctx: disnake.ApplicationCommandInteraction):
         await ctx.response.defer()
 
-    @player.sub_command(name="lookup", description="Lookup a player or discord user")
+    @player.sub_command(name=disnake.Localized("lookup", key="lookup-name"),
+                        description=disnake.Localized("Lookup a player or discord user",
+                                                      key="player-lookup-description"))
     async def lookup(self, ctx: disnake.ApplicationCommandInteraction,
-                     player: coc.Player = commands.Param(default=None, converter=convert.player, autocomplete=autocomplete.family_players),
-                     discord_user: disnake.Member= None):
+                     player: coc.Player = commands.Param(default=None, converter=convert.player,
+                                                         autocomplete=autocomplete.family_players),
+                     discord_user: disnake.Member = None):
         """
             Parameters
             ----------
+            ctx : disnake.ApplicationCommandInteraction
             player: (optional) player to lookup
             discord_user: (optional) discord user to lookup
         """
@@ -69,14 +72,11 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
 
         msg = await ctx.original_message()
 
-
         await button_pagination(self.bot, ctx, msg, results)
 
-
-
-
-    @player.sub_command(name="upgrades", description="Show upgrades left for an account")
-    async def upgrades(self, ctx: disnake.ApplicationCommandInteraction, player_tag: str = None, discord_user: disnake.Member = None):
+    @player.sub_command(name=disnake.Localized("upgrades", key="upgrades-name"), description=disnake.Localized("Show upgrades left for an account", key="player-upgrades-description"))
+    async def upgrades(self, ctx: disnake.ApplicationCommandInteraction, player_tag: str = None,
+                       discord_user: disnake.Member = None):
         if player_tag is None and discord_user is None:
             search_query = str(ctx.author.id)
         elif player_tag is not None:
@@ -119,9 +119,7 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
             embed = await create_profile_troops(self.bot, players[current_page])
             await res.edit_original_message(embeds=embed)
 
-
-
-    @player.sub_command(name="accounts", description="List of accounts a user has & combined stats")
+    @player.sub_command(name=disnake.Localized("accounts", key="accounts-name"), description=disnake.Localized("List of accounts a user has & combined stats", key="player-accounts-description"))
     async def list(self, ctx: disnake.ApplicationCommandInteraction, discord_user: disnake.Member = None):
         discord_user = discord_user if discord_user is not None else ctx.author
 
@@ -133,20 +131,19 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
 
         await ctx.edit_original_message(embed=embed)
 
-
-
-    @player.sub_command(name="to-do", description="Get a list of things to be done (war attack, legends hits, capital raids etc)")
+    @player.sub_command(name=disnake.Localized("to-do", key="to-do-name"),
+                        description=disnake.Localized("Get a list of things to be done (war attack, legends hits, capital raids etc)", key="player-to-do-description"))
     async def to_do(self, ctx: disnake.ApplicationCommandInteraction, discord_user: disnake.Member = None):
         if discord_user is None:
             discord_user = ctx.author
         linked_accounts = await search_results(self.bot, str(discord_user.id))
         if not linked_accounts:
             raise NoLinkedAccounts
-        embed = await player_embeds.to_do_embed(bot=self.bot, discord_user=discord_user, linked_accounts=linked_accounts)
+        embed = await player_embeds.to_do_embed(bot=self.bot, discord_user=discord_user,
+                                                linked_accounts=linked_accounts)
         await ctx.edit_original_message(embed=embed)
 
-
-    @player.sub_command(name="war-stats", description="War stats of a player or discord user")
+    @player.sub_command(name=disnake.Localized("war-stats", key="war-stats-name"), description=disnake.Localized("War stats of a player or discord user", key="player-war-stats-description"))
     async def war_stats_player(self, ctx: disnake.ApplicationCommandInteraction, player_tag: str = None,
                                discord_user: disnake.Member = None, start_date=0, end_date=9999999999):
         """
@@ -175,7 +172,8 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
         if not players:
             embed = disnake.Embed(description="**No matching player/discord user found**", colour=disnake.Color.red())
             return await ctx.edit_original_message(embed=embed)
-        embed = await player_embeds.create_player_hr(bot=self.bot, player=players[0], start_date=start_date, end_date=end_date)
+        embed = await player_embeds.create_player_hr(bot=self.bot, player=players[0], start_date=start_date,
+                                                     end_date=end_date)
         await ctx.edit_original_message(embed=embed, components=player_components(players))
         if len(players) == 1:
             return
@@ -196,17 +194,17 @@ class PlayerCommands(commands.Cog, name="Player Commands"):
                 break
             await res.response.defer()
             page = int(res.values[0])
-            embed = await player_embeds.create_player_hr(bot=self.bot, player=players[page], start_date=start_date, end_date=end_date)
+            embed = await player_embeds.create_player_hr(bot=self.bot, player=players[page], start_date=start_date,
+                                                         end_date=end_date)
             await res.edit_original_message(embed=embed)
 
-
-    @player.sub_command(name="stats", description="Get stats for different areas of a player")
-    async def player_stats(self, ctx: disnake.ApplicationCommandInteraction, member: disnake.Member, type:str =commands.Param(choices=["CWL", "Raids"])):
+    @player.sub_command(name=disnake.Localized("stats", key="stats-name"), description=disnake.Localized("Get stats for different areas of a player", key="player-stats-description"))
+    async def player_stats(self, ctx: disnake.ApplicationCommandInteraction, member: disnake.Member,
+                           type: str = commands.Param(choices=["CWL", "Raids"])):
         if type == "Raids":
             return await player_embeds.raid_stalk(bot=self.bot, ctx=ctx, member=member)
         elif type == "CWL":
-            return await player_embeds.cwl_stalk(bot=self.bot,ctx=ctx, member=member)
-
+            return await player_embeds.cwl_stalk(bot=self.bot, ctx=ctx, member=member)
 
 
 def setup(bot: CustomClient):

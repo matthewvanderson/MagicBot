@@ -8,6 +8,8 @@ import re
 import asyncio
 import calendar
 import aiohttp
+from fluent.runtime import FluentLocalization, FluentResourceLoader
+
 import emoji
 import pendulum as pend
 
@@ -29,11 +31,15 @@ from classes.config import Config
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utility.login import coc_login
 from background.logs.events import kafka_events
+from disnake.ext import commands, fluent
 
 
 class CustomClient(commands.AutoShardedBot):
     def __init__(self, config: Config, command_prefix: str, help_command, intents: disnake.Intents, scheduler: AsyncIOScheduler, shard_count: int | None, chunk_guilds_at_startup: bool, **kwargs):
         super().__init__(command_prefix=command_prefix, help_command=help_command, intents=intents, shard_count=shard_count, chunk_guilds_at_startup=chunk_guilds_at_startup, **kwargs)
+
+        self.i18n = fluent.FluentStore()
+        self.i18n.load("locales/")
 
         self._config = config
 
@@ -158,6 +164,7 @@ class CustomClient(commands.AutoShardedBot):
 
         self.number_emoji_map = {}
         self.BADGE_GUILDS = BADGE_GUILDS
+
 
     @property
     def emoji(self):
